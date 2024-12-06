@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>QR Code Scanner</title>
-  <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+  <title>QR Code Scanner from Image</title>
+  <script src="https://unpkg.com/jsqr/dist/jsQR.js"></script> <!-- Thư viện jsQR -->
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -12,10 +12,6 @@
       flex-direction: column;
       align-items: center;
       padding: 20px;
-    }
-    #reader {
-      width: 300px;
-      margin-bottom: 20px;
     }
     button {
       padding: 10px 20px;
@@ -28,6 +24,9 @@
     button:hover {
       background-color: #0056b3;
     }
+    input[type="file"] {
+      margin-top: 20px;
+    }
     #result {
       margin-top: 20px;
       color: green;
@@ -35,54 +34,74 @@
   </style>
 </head>
 <body>
-  <h1>QR Code Scanner</h1>
-  <div id="reader"></div>
-  <button id="start-scan">Start Scanning</button>
+  <h1>Upload and Scan QR Code</h1>
+
+  <!-- Nút để upload file hình ảnh -->
+  <input type="file" id="file-input" accept="image/*">
+  <br><br>
+  <button id="upload-btn">Scan QR Code</button>
+
   <p id="result"></p>
 
   <script>
     // Thay thế bằng URL Web App của bạn
-    const webAppUrl = "https://script.google.com/macros/s/ABC123xyz/exec"; 
+    const webAppUrl = "https://script.google.com/macros/s/ABC123xyz/exec"; // URL của Google Apps Script
 
-    document.getElementById("start-scan").addEventListener("click", () => {
-      const html5QrCode = new Html5Qrcode("reader");
+    document.getElementById("upload-btn").addEventListener("click", () => {
+      const fileInput = document.getElementById("file-input");
+      const file = fileInput.files[0];
 
-      html5QrCode.start(
-        { facingMode: "environment" }, // Sử dụng camera sau
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-        },
-        (decodedText, decodedResult) => {
-          // Dừng quét sau khi tìm thấy mã QR
-          html5QrCode.stop().then(() => {
-            document.getElementById("result").innerText = `Scanned: ${decodedText}`;
-            
-            // Gửi dữ liệu QR lên Google Sheets qua Apps Script
-            fetch(webAppUrl, {
-              method: "POST",
-              body: JSON.stringify({ qr_data: decodedText }),
-              headers: {
-                "Content-Type": "application/json",
-              },
-            })
-              .then((response) => {
-                if (response.ok) {
-                  alert("Data saved to Google Sheets!");
-                } else {
-                  alert("Error saving data!");
-                }
+      if (file) {
+        const reader = new FileReader();
+
+        reader.onload = function (event) {
+          const img = new Image();
+          img.onload = function () {
+            // Tạo canvas để quét mã QR
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0, img.width, img.height);
+
+            // Quét mã QR từ hình ảnh trên canvas
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, canvas.width, canvas.height);
+
+            if (code) {
+              const qrData = code.data;  // Lấy dữ liệu mã QR
+              document.getElementById("result").innerText = `QR Code Data: ${qrData}`;
+
+              // Gửi dữ liệu QR lên Google Sheets qua Google Apps Script
+              fetch(webAppUrl, {
+                method: "POST",
+                body: JSON.stringify({ qr_data: qrData }),
+                headers: {
+                  "Content-Type": "application/json",
+                },
               })
-              .catch((err) => {
-                alert("Request failed!");
-                console.error(err);
-              });
-          }).catch(console.error);
-        },
-        (errorMessage) => {
-          console.warn(`QR error: ${errorMessage}`);
-        }
-      ).catch(console.error);
+                .then((response) => {
+                  if (response.ok) {
+                    alert("Data saved to Google Sheets!");
+                  } else {
+                    alert("Error saving data!");
+                  }
+                })
+                .catch((err) => {
+                  alert("Request failed!");
+                  console.error(err);
+                });
+            } else {
+              alert("Không tìm thấy mã QR trong ảnh.");
+            }
+          };
+          img.src = event.target.result;  // Tải ảnh từ file input
+        };
+
+        reader.readAsDataURL(file); // Đọc file hình ảnh
+      } else {
+        alert("Vui lòng chọn một tệp hình ảnh.");
+      }
     });
   </script>
 </body>
