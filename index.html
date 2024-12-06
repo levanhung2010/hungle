@@ -3,49 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Code Scanner</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 20px;
-        }
-        input[type="file"] {
-            margin-top: 20px;
-        }
-        #result {
-            margin-top: 20px;
-            font-size: 18px;
-        }
-    </style>
+    <title>My Website</title>
 </head>
 <body>
-    <h1>QR Code Scanner</h1>
-    <form id="uploadForm" enctype="multipart/form-data">
-        <input type="file" id="fileInput" name="file" accept="image/*">
-        <button type="submit">Upload and Scan</button>
-    </form>
-    <div id="result"></div>
-
-    <script>
-        document.getElementById("uploadForm").onsubmit = async (e) => {
-            e.preventDefault();
-            const formData = new FormData();
-            formData.append("file", document.getElementById("fileInput").files[0]);
-
-            const response = await fetch("/upload", {
-                method: "POST",
-                body: formData
-            });
-
-            const result = await response.json();
-            const resultDiv = document.getElementById("result");
-            if (result.success) {
-                resultDiv.innerHTML = `<p style="color: green;">${result.message}</p><p>Data: ${result.data}</p>`;
-            } else {
-                resultDiv.innerHTML = `<p style="color: red;">${result.message}</p>`;
-            }
-        };
-    </script>
+    <h1>Welcome to My Website</h1>
 </body>
 </html>
