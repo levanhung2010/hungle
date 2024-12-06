@@ -1,51 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Code Scanner</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 20px;
-        }
-        input[type="file"] {
-            margin-top: 20px;
-        }
-        #result {
-            margin-top: 20px;
-            font-size: 18px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Code Scanner</title>
+  <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    #reader {
+      width: 300px;
+      margin-bottom: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #result {
+      margin-top: 20px;
+      color: green;
+    }
+  </style>
 </head>
 <body>
-    <h1>QR Code Scanner</h1>
-    <form id="uploadForm" enctype="multipart/form-data">
-        <input type="file" id="fileInput" name="file" accept="image/*">
-        <button type="submit">Upload and Scan</button>
-    </form>
-    <div id="result"></div>
+  <h1>QR Code Scanner</h1>
+  <div id="reader"></div>
+  <button id="start-scan">Start Scanning</button>
+  <p id="result"></p>
 
-    <script>
-        document.getElementById("uploadForm").onsubmit = async (e) => {
-            e.preventDefault();
-            const formData = new FormData();
-            formData.append("file", document.getElementById("fileInput").files[0]);
+  <script>
+    document.getElementById("start-scan").addEventListener("click", () => {
+      const html5QrCode = new Html5Qrcode("reader");
 
-            const response = await fetch("/upload", {
-                method: "POST",
-                body: formData
-            });
-
-            const result = await response.json();
-            const resultDiv = document.getElementById("result");
-            if (result.success) {
-                resultDiv.innerHTML = `<p style="color: green;">${result.message}</p><p>Data: ${result.data}</p>`;
-            } else {
-                resultDiv.innerHTML = `<p style="color: red;">${result.message}</p>`;
-            }
-        };
-    </script>
+      html5QrCode.start(
+        { facingMode: "environment" }, // Sử dụng camera sau
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+        },
+        (decodedText, decodedResult) => {
+          // Dừng quét sau khi tìm thấy mã QR
+          html5QrCode.stop().then(() => {
+            document.getElementById("result").innerText = `Scanned: ${decodedText}`;
+            alert(`QR Code Content: ${decodedText}`);
+          }).catch(console.error);
+        },
+        (errorMessage) => {
+          console.warn(`QR error: ${errorMessage}`);
+        }
+      ).catch(console.error);
+    });
+  </script>
 </body>
 </html>
