@@ -41,6 +41,9 @@
   <p id="result"></p>
 
   <script>
+    // Thay thế bằng URL Web App của bạn
+    const webAppUrl = "https://script.google.com/macros/s/ABC123xyz/exec"; 
+
     document.getElementById("start-scan").addEventListener("click", () => {
       const html5QrCode = new Html5Qrcode("reader");
 
@@ -54,7 +57,26 @@
           // Dừng quét sau khi tìm thấy mã QR
           html5QrCode.stop().then(() => {
             document.getElementById("result").innerText = `Scanned: ${decodedText}`;
-            alert(`QR Code Content: ${decodedText}`);
+            
+            // Gửi dữ liệu QR lên Google Sheets qua Apps Script
+            fetch(webAppUrl, {
+              method: "POST",
+              body: JSON.stringify({ qr_data: decodedText }),
+              headers: {
+                "Content-Type": "application/json",
+              },
+            })
+              .then((response) => {
+                if (response.ok) {
+                  alert("Data saved to Google Sheets!");
+                } else {
+                  alert("Error saving data!");
+                }
+              })
+              .catch((err) => {
+                alert("Request failed!");
+                console.error(err);
+              });
           }).catch(console.error);
         },
         (errorMessage) => {
