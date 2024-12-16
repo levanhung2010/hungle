@@ -1,2 +1,4 @@
 Flask==3.0.3
 Flask-SocketIO==5.4.1
+cmake>=3.18.4
+dlib>=19.22
